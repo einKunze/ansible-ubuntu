@@ -1,0 +1,4 @@
+docker_version: '*' # means latest, otherwise use concrete version e.g.: 18.09.7-0ubuntu1~16.04.5
+containerd_version: '*'
+docker_user: "{{ ansible_user }}"
+docker_compose_version: 1.29.2

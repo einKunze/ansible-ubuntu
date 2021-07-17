@@ -1,0 +1,77 @@
+- name: "Remove old deprecated packages from previous docker installations"
+  become: yes
+  apt:
+    name: 
+     - docker 
+     - docker-engine 
+     - docker.io 
+     - containerd 
+     - runc
+    state: absent
+    
+- name: "Install Tools"
+  become: yes
+  apt:
+    update_cache: yes    
+    name:     
+     - apt-transport-https
+     - ca-certificates
+     - curl    
+     - bash-completion     
+     - gnupg
+     - lsb-release
+
+- name: "Add Docker apt signing key, will not download if present"
+  become: yes
+  apt_key:    
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: "Add Docker repository source.list"
+  become: yes
+  apt_repository:
+    repo: "deb https://download.docker.com/linux/ubuntu {{ ansible_facts.lsb.codename }} stable"
+    state: present
+    filename: docker 
+    mode: "0644"
+    update_cache: yes
+    
+- name: 'Unhold docker software'
+  become: yes
+  command: "apt-mark unhold docker-ce docker-ce-cli containerd.io"    
+  ignore_errors: yes
+    
+- name: "Install docker"
+  become: yes
+  apt:
+    update_cache: yes    
+    name:
+     - "docker-ce={{ docker_version }}"
+     - "docker-ce-cli={{ docker_version }}"
+     - "containerd.io={{ containerd_version }}"         
+ 
+- name: "Hold docker software"
+  become: yes
+  command: "apt-mark hold docker-ce docker-ce-cli containerd.io"   
+ 
+- name: "Add user to group docker"
+  become: yes
+  user: 
+    name: "{{ docker_user }}"
+    groups: docker
+    append: yes
+
+- name: "Add daemon.json (set cgroup driver to systemd)"
+  become: yes
+  copy:
+    src: daemon.json
+    dest: /etc/docker/daemon.json
+  notify: restart docker service
+  
+- name: "Install docker-compose"
+  become: yes
+  get_url: 
+    url: "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-{{ ansible_facts.system }}-{{ ansible_facts.architecture }}"
+    dest: /usr/local/bin/docker-compose
+    mode: '0555'  
+      

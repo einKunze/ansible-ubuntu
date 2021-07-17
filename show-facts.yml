@@ -1,0 +1,6 @@
+- hosts: docker-hosts
+  tasks:
+    - name: Debug facts
+      debug:
+        msg: "{{ ansible_facts }}" 
+  
